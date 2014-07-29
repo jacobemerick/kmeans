@@ -8,6 +8,9 @@ class KMeans
     // initial, unmodified data field
     protected $data;
 
+    // convenience parameter to track observation size
+    protected $observation_size;
+
     // array of modified data, multi-dimensional based on cluster_count
     protected $clustered_data;
 
@@ -24,7 +27,7 @@ class KMeans
     ];
 
     /**
-     * basic construct that accepts the initial list of data points
+     * basic construct that accepts the initial list of observations
      * exception thrown if data is not suitable for clustering
      *
      * @param  $data  array  list of observations, each observation having n-dimensions, each row with identical length
@@ -36,6 +39,7 @@ class KMeans
         }
 
         $this->data = $data;
+        $this->observation_size = count(current($data));
     }
 
     /**
@@ -47,7 +51,7 @@ class KMeans
      * @param   $method         string   the preferred method for clustering ('Random' or 'Forgy')
      * @return                  array    clustered data from process (getClusteredData)
      */
-    public function cluster($cluster_count, $method = 'Random')
+    public function cluster($cluster_count, $method = 'Forgy')
     {
         if ($cluster_count < 2) {
             throw new Exception('Cluster count must be greater than 1');
