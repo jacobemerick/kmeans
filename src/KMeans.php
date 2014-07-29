@@ -1,6 +1,6 @@
 <?php
 
-namespace Jemerick\KMeans;
+namespace Jacobemerick\KMeans;
 
 class KMeans
 {
