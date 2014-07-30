@@ -2,6 +2,8 @@
 
 namespace Jacobemerick\KMeans;
 
+use Exception;
+
 class KMeans
 {
 
@@ -22,15 +24,15 @@ class KMeans
 
     // acceptable methods for clustering
     protected static $ACCEPTED_CLUSTERING_METHODS = [
-        'Random',
-        'Forgy',
+        'random',
+        'forgy',
     ];
 
     /**
      * basic construct that accepts the initial list of observations
-     * exception thrown if data is not suitable for clustering
+     * exception thrown if data is not large enough for clustering
      *
-     * @param  $data  array  list of observations, each observation having n-dimensions, each row with identical length
+     * @param  $data  array  list of observations, each observation a same-length list of numeric values
      */
     public function __construct(array $data)
     {
@@ -48,10 +50,10 @@ class KMeans
      * hydrates the important parameters (clustered data, centroids, etc)
      *
      * @param   $cluster_count  integer  how many clusters to break the data into
-     * @param   $method         string   the preferred method for clustering ('Random' or 'Forgy')
+     * @param   $method         string   the preferred method for clustering ('random' or 'forgy')
      * @return                  array    clustered data from process (getClusteredData)
      */
-    public function cluster($cluster_count, $method = 'Forgy')
+    public function cluster($cluster_count, $method = 'forgy')
     {
         if ($cluster_count < 2) {
             throw new Exception('Cluster count must be greater than 1');
@@ -63,6 +65,8 @@ class KMeans
         if (!in_array($method, self::$ACCEPTED_CLUSTERING_METHODS)) {
             throw new Exception("Unrecognized method passed into cluster: {$method}");
         }
+
+        $initial_centroids = $this->getInitialCentroids($cluster_count, $method);
     }
 
     /**
@@ -112,6 +116,23 @@ class KMeans
     }
 
     /**
+     * contained switch for initialization method
+     *
+     * @param   $cluster_count  integer  how manu clusters are requested
+     * @param   $method         string   type of initialization requested
+     * @return                  array    list of centroids for initialization
+     */
+    protected function getInitialCentroids($cluster_count, $method)
+    {
+        if ($method == 'forgy') {
+            return $this->getForgyInitialization($cluster_count);
+        }
+        if ($method == 'random') {
+            return $this->getRandomInitialization($cluster_count);
+        }
+    }
+
+    /**
      * get initialization points from random selection
      * try to lean towards center of data set
      *
@@ -120,6 +141,9 @@ class KMeans
      */
     protected function getRandomInitialization($cluster_count)
     {
+        $random_keys = array_rand($this->data, $cluster_count);
+        $random_keys = array_flip($random_keys);
+        return array_intersect_key($this->data, $random_keys);
     }
 
     /**
@@ -131,6 +155,29 @@ class KMeans
      */
     protected function getForgyInitialization($cluster_count)
     {
+        $data_range = array_fill(0, $this->observation_size, ['min' => null, 'max' => null]);
+        foreach ($this->data as $observation) {
+            $key = 0;
+            foreach ($observation as $value) {
+                if ($data_range[$key]['min'] === null || $data_range[$key]['min'] > $value) {
+                    $data_range[$key]['min'] = $value;
+                }
+                if ($data_range[$key]['max'] === null || $data_range[$key]['max'] < $value) {
+                    $data_range[$key]['max'] = $value;
+                }
+                $key++;
+            }
+        }
+
+        $random_points = [];
+        for ($i = 0; $i < $cluster_count; $i++) {
+            $random_points[$i] = array_fill(0, $this->observation_size, null);
+            foreach ($data_range as $key => $range) {
+                $random_points[$i][$key] = ($range['min'] + lcg_value() * ($range['max'] - $range['min']));
+            }
+        }
+
+        return $random_points;
     }
 
 }
