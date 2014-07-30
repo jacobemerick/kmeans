@@ -10,9 +10,6 @@ class KMeans
     // initial, unmodified data field
     protected $data;
 
-    // convenience parameter to track observation size
-    protected $observation_size;
-
     // array of modified data, multi-dimensional based on cluster_count
     protected $clustered_data;
 
@@ -41,7 +38,6 @@ class KMeans
         }
 
         $this->data = $data;
-        $this->observation_size = count(current($data));
     }
 
     /**
@@ -77,9 +73,9 @@ class KMeans
 
             foreach ($this->data as $observation) {
                 $closest_centroid = $this->calculateClosestCentroid($observation, $this->centroids);
-                $new_clustered_data[$closest_centroid] = $observation;
+                array_push($new_clustered_data[$closest_centroid], $observation);
             }
-        } while ($this->assignmentConvergenceCheck($this->clustered_data, $new_clustered_data) == false);
+        } while ($this->assignmentConvergenceCheck((array) $this->clustered_data, $new_clustered_data) === false);
 
         return $this->getClusteredData();
     }
@@ -170,23 +166,11 @@ class KMeans
      */
     protected function getForgyInitialization($cluster_count)
     {
-        $data_range = array_fill(0, $this->observation_size, ['min' => null, 'max' => null]);
-        foreach ($this->data as $observation) {
-            $key = 0;
-            foreach ($observation as $value) {
-                if ($data_range[$key]['min'] === null || $data_range[$key]['min'] > $value) {
-                    $data_range[$key]['min'] = $value;
-                }
-                if ($data_range[$key]['max'] === null || $data_range[$key]['max'] < $value) {
-                    $data_range[$key]['max'] = $value;
-                }
-                $key++;
-            }
-        }
-
+        $data_range = $this->calculateRange($this->data);
         $random_points = [];
+
         for ($i = 0; $i < $cluster_count; $i++) {
-            $random_points[$i] = array_fill(0, $this->observation_size, null);
+            $random_points[$i] = array_fill(0, count($this->data), null);
             foreach ($data_range as $key => $range) {
                 $random_points[$i][$key] = ($range['min'] + lcg_value() * ($range['max'] - $range['min']));
             }
@@ -201,7 +185,19 @@ class KMeans
      * @param   $clustered_data  array  multi-dimensional array of clustered data
      * @return                   array  list of centroids
      */
-    protected function calculateCentroids($clustered_data) {}
+    protected function calculateCentroids(array $clustered_data)
+    {
+        $centroids = [];
+        foreach ($clustered_data as $cluster) {
+            $range = $this->calculateRange($cluster);
+            $centroid = [];
+            foreach ($range as $dimension) {
+                array_push($centroid, ($dimension['max'] - $dimension['min']) / 2);
+            }
+            array_push($centroids, $centroid);
+        }
+        return $centroids;
+    }
 
     /**
      * calculate the closest centroid to an observation
@@ -210,7 +206,16 @@ class KMeans
      * @param   $centroids    array    list of centroids
      * @return                integer  index that observation should be clustered into
      */
-    protected function calculateClosestCentroid($observation, $centroids) {}
+    protected function calculateClosestCentroid(array $observation, array $centroids)
+    {
+        $centroid_distance = [];
+        foreach ($centroids as $centroid) {
+            array_push($centroid_distance, $this->calculateDistance($observation, $centroid));
+        }
+        asort($centroid_distance);
+        $centroid_distance = array_flip($centroid_distance);
+        return array_shift($centroid_distance);
+    }
 
     /**
      * check to see if clustered data has converged yet
@@ -220,16 +225,66 @@ class KMeans
      * @param   $new_clustered_data  array    new clustered_data to check against
      * @return                       boolean  whether or not convergence has occurred
      */
-    protected function assignmentConvergenceCheck($clustered_data, $new_clustered_data) {}
+    protected function assignmentConvergenceCheck(array $clustered_data, array $new_clustered_data)
+    {
+        if (empty($clustered_data)) {
+            $this->clustered_data = $new_clustered_data;
+            return false;
+        }
+
+        foreach ($clustered_data as $key => $cluster) {
+            foreach ($cluster as $observation) {
+                if (!in_array($observation, $new_clustered_data[$key])) {
+                    $this->clustered_data = $new_clustered_data;
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * helper method to get the range of a set of data
+     *
+     * @param   $data  array  list of points to determine range of
+     * @return         array  formatted return of range based on the data
+     */
+    protected function calculateRange($data)
+    {
+        $data_range = array_fill(0, count($data), ['min' => null, 'max' => null]);
+        foreach ($data as $observation) {
+            $key = 0;
+            foreach ($observation as $value) {
+                if ($data_range[$key]['min'] === null || $data_range[$key]['min'] > $value) {
+                    $data_range[$key]['min'] = $value;
+                }
+                if ($data_range[$key]['max'] === null || $data_range[$key]['max'] < $value) {
+                    $data_range[$key]['max'] = $value;
+                }
+                $key++;
+            }
+        }
+
+        return $data_range;
+    }
 
     /**
      * helper method to determine the euclidean distance between two n-dimensional points
+     * well, sum of squares, as the actual distance is unneeded - just the relative distance
      *
      * @param   $point_a  array  list of numeric values that determine a point
      * @param   $point_b  array  list of numeric values that determine a point
      * @return            float  distance between the points
      */
-    protected function calculateDistance($point_a, $point_b) {}
+    protected function calculateDistance($point_a, $point_b)
+    {
+        $distance = 0;
+        for ($i = 0, $count = count($point_a); $i < $count; $i++) {
+            $difference = $point_a[$i] - $point_b[$i];
+            $distance += pow($difference, 2);
+        }
+        return $distance;
+    }
 
 }
 
