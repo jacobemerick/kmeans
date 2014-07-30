@@ -1,0 +1,20 @@
+{
+    "name": "jacobemerick/kmeans",
+    "description": "",
+    "keywords": [],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jacob Emerick"
+        }
+    ],
+    "require": {
+        "php": ">=5.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jacobemerick\\KMeans\\": "src/"
+        }
+    }
+}
+
