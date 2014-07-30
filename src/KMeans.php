@@ -66,7 +66,22 @@ class KMeans
             throw new Exception("Unrecognized method passed into cluster: {$method}");
         }
 
-        $initial_centroids = $this->getInitialCentroids($cluster_count, $method);
+        do {
+            $new_clustered_data = array_fill(0, $cluster_count, []);
+
+            if (empty($this->centroids)) {
+                $this->centroids = $this->getInitialCentroids($cluster_count, $method);
+            } else {
+                $this->centroids = $this->calculateCentroids($this->clustered_data);
+            }
+
+            foreach ($this->data as $observation) {
+                $closest_centroid = $this->calculateClosestCentroid($observation, $this->centroids);
+                $new_clustered_data[$closest_centroid] = $observation;
+            }
+        } while ($this->assignmentConvergenceCheck($this->clustered_data, $new_clustered_data) == false);
+
+        return $this->getClusteredData();
     }
 
     /**
@@ -179,6 +194,42 @@ class KMeans
 
         return $random_points;
     }
+
+    /**
+     * calculate centroids based on clustered data
+     *
+     * @param   $clustered_data  array  multi-dimensional array of clustered data
+     * @return                   array  list of centroids
+     */
+    protected function calculateCentroids($clustered_data) {}
+
+    /**
+     * calculate the closest centroid to an observation
+     *
+     * @param   $observation  array    observation from data set
+     * @param   $centroids    array    list of centroids
+     * @return                integer  index that observation should be clustered into
+     */
+    protected function calculateClosestCentroid($observation, $centroids) {}
+
+    /**
+     * check to see if clustered data has converged yet
+     * if not, reassing new data to internal holder and return false to re-run script
+     *
+     * @param   $clustered_data      array    the old holder of clustered_data
+     * @param   $new_clustered_data  array    new clustered_data to check against
+     * @return                       boolean  whether or not convergence has occurred
+     */
+    protected function assignmentConvergenceCheck($clustered_data, $new_clustered_data) {}
+
+    /**
+     * helper method to determine the euclidean distance between two n-dimensional points
+     *
+     * @param   $point_a  array  list of numeric values that determine a point
+     * @param   $point_b  array  list of numeric values that determine a point
+     * @return            float  distance between the points
+     */
+    protected function calculateDistance($point_a, $point_b) {}
 
 }
 
