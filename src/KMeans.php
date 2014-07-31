@@ -63,19 +63,21 @@ class KMeans
         }
 
         do {
-            $new_clustered_data = array_fill(0, $cluster_count, []);
-
-            if (empty($this->centroids)) {
-                $this->centroids = $this->getInitialCentroids($cluster_count, $method);
+            if (empty($centroids)) {
+                $centroids = $this->getInitialCentroids($cluster_count, $method);
             } else {
-                $this->centroids = $this->calculateCentroids($this->clustered_data);
+                $centroids = $this->calculateCentroids($this->clustered_data);
             }
 
+            $new_clustered_data = array_fill(0, $cluster_count, []);
             foreach ($this->data as $observation) {
-                $closest_centroid = $this->calculateClosestCentroid($observation, $this->centroids);
+                $closest_centroid = $this->calculateClosestCentroid($observation, $centroids);
                 array_push($new_clustered_data[$closest_centroid], $observation);
             }
         } while ($this->assignmentConvergenceCheck((array) $this->clustered_data, $new_clustered_data) === false);
+
+        $this->centroids = $centroids;
+        // todo calculate centroid distances
 
         return $this->getClusteredData();
     }
@@ -251,7 +253,7 @@ class KMeans
      */
     protected function calculateRange($data)
     {
-        $data_range = array_fill(0, count($data), ['min' => null, 'max' => null]);
+        $data_range = array_fill(0, count(current($data)), ['min' => null, 'max' => null]);
         foreach ($data as $observation) {
             $key = 0;
             foreach ($observation as $value) {
