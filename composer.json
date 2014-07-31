@@ -1,7 +1,7 @@
 {
     "name": "jacobemerick/kmeans",
-    "description": "",
-    "keywords": [],
+    "description": "k-means clustering implemented in PHP",
+    "keywords": ["k-means", "clustering", "data analysis", "statistics"],
     "license": "MIT",
     "authors": [
         {
