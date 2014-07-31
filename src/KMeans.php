@@ -119,6 +119,7 @@ class KMeans
      *
      * @return  array  list of centroid distances
      */
+/*
     public function getCentroidDistance()
     {
         if (empty($this->centroid_distance)) {
@@ -127,6 +128,7 @@ class KMeans
 
         return $this->centroid_distance;
     }
+*/
 
     /**
      * contained switch for initialization method
@@ -191,10 +193,15 @@ class KMeans
     {
         $centroids = [];
         foreach ($clustered_data as $cluster) {
-            $range = $this->calculateRange($cluster);
-            $centroid = [];
-            foreach ($range as $dimension) {
-                array_push($centroid, ($dimension['max'] - $dimension['min']) / 2);
+            $cluster_sum = array_fill(0, count(current($cluster)), 0);
+            foreach ($cluster as $observation) {
+                foreach ($observation as $key => $value) {
+                    $cluster_sum[$key] += $value;
+                }
+            }
+            $centroid = array_fill(0, count(current($cluster)), 0);
+            foreach ($cluster_sum as $key => $value) {
+                $centroid[$key] = $value / count($cluster);
             }
             array_push($centroids, $centroid);
         }
@@ -215,7 +222,7 @@ class KMeans
             array_push($centroid_distance, $this->calculateDistance($observation, $centroid));
         }
         asort($centroid_distance);
-        $centroid_distance = array_flip($centroid_distance);
+        $centroid_distance = array_keys($centroid_distance);
         return array_shift($centroid_distance);
     }
 
