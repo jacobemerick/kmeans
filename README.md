@@ -21,7 +21,7 @@ $array = [
 By observation you may suspect that this data can be clustered into 3 separate sets. To test, run the class.
 
 ```php
-$kmeans = new Jacobemerick\KMeans\Kmeans($array);
+$kmeans = new Jacobemerick\KMeans\KMeans($array);
 $kmeans->cluster(3); // cluster into three sets
 
 $clustered_data = $kmeans->getClusteredData();
